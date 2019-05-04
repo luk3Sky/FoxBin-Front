@@ -9,6 +9,7 @@ import AlertTemplate from "react-alert-template-basic";
 // Redux strore
 import { Provider } from "react-redux";
 import store from "./store/store";
+import { loadUser } from "./store/actions/authActions";
 
 // Styles
 // import style from "./App.module.css";
@@ -36,6 +37,9 @@ const options = {
 };
 
 class App extends Component {
+  componentDidMount(){
+    store.dispatch(loadUser());
+  }
   render() {
     // console.log(window.location.href.split("=")[2]);
     // const token = window.location.href.split("=")[2];
@@ -50,12 +54,12 @@ class App extends Component {
             <BrowserRouter>
                 <Navbar />
                 <main className="mt-0">
-                    <Switch>
-                        <ProtectedRoute exact path="/dashboard" component={Dashboard} />
+                    {/* <Switch> */}
+                        <Route exact path="/" component={Home} />
+                        <ProtectedRoute path="/dashboard" component={Dashboard} />
                         <Route path="/signin" component={Signin} />
                         <Route path="/register" component={Register} />
-                        <Route exact path="/" component={Home} />
-                    </Switch>
+                    {/* </Switch> */}
                 </main>
                 <Footer />
             </BrowserRouter>
