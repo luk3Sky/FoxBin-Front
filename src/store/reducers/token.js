@@ -3,11 +3,17 @@ import * as actionTypes from '../actions/actionTypes';
 const initialState = {
     tokens: [],
     isLoading: false,
-    isLoaded: false
+    isValidating: false,
+    isValidated: null,
+    validToken: null,
+    userDetails: null
 }
 
 export default function (state=initialState, action) {
     switch (action.type) {
+        
+        // Token Fetching [FoxBinary]
+        case actionTypes.TOKEN_ADD_START:
         case actionTypes.TOKEN_FETCH_START:
             return {
                 ...state,
@@ -38,13 +44,47 @@ export default function (state=initialState, action) {
             return {
                 ...state,
                 tokens: tokens,
-                isLoading: false,
-                isLoaded: true
+                isLoading: false
             };
         case actionTypes.TOKEN_FETCH_FAIL:
             return{
                 tokens: [],
                 isLoading: false
+            }
+
+        case actionTypes.TOKEN_ADD_SUCCESS:
+            const newTokens = action.payload;
+            return {
+                ...state,
+                tokens: newTokens,
+                isLoading: false,
+            }
+        case actionTypes.TOKEN_ADD_FAIL:
+            return{
+                ...state,
+                isValidated: false,
+                isLoading: false
+            }
+        
+        // Token validation [Binary.com]
+        case actionTypes.TOKEN_VALIDATION_START:
+            return {
+                ...state,
+                isValidating: true
+            }
+        case actionTypes.TOKEN_VALIDATION_SUCCESS:
+            return {
+                ...state,
+                isValidated: true,
+                validToken: action.payload.token,
+                userDetails: action.payload.userDetails
+            }
+            case actionTypes.TOKEN_VALIDATION_FAIL:
+            return {
+                ...state,
+                isValidated: false,
+                validToken: null,
+                isValidating: false
             }
         default:
             return state;
