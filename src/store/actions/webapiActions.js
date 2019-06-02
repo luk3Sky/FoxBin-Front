@@ -19,6 +19,8 @@ export const loadTokens = () => (dispatch, getState) => {
         type: actionTypes.TOKEN_FETCH_SUCCESS,
         payload: res.data
       });
+      // console.log(getState().webapi);
+      dispatch(validateToken(getState().webapi.activeToken));
     })
     .catch(error => {
       console.log(error);
@@ -40,16 +42,20 @@ export const addToken = (token) => (dispatch, getState) => {
   axios
     .post("https://foxbin-api.herokuapp.com/api/token/", token, headerConfig(getState))
     .then(res => {
-      var tokens = getState().token.tokens;
-      var secondToken = tokens.shift();
-      secondToken['active'] = false;
+      var tokens = getState().webapi.tokens;
       var newToken = {
         id: res.data.id,
         token:  res.data.token,
         active:  true,
         created_at:  res.data.created_at
       };
-      tokens.splice(0, 0, newToken, secondToken);
+      if(tokens.length > 0){
+        var secondToken= tokens.shift();
+        secondToken['active'] = false;
+        tokens.splice(0, 0, newToken, secondToken);
+      }else{
+        tokens= [newToken];
+      }
       dispatch({
         type: actionTypes.TOKEN_ADD_SUCCESS,
         payload: tokens
@@ -74,7 +80,7 @@ export const addToken = (token) => (dispatch, getState) => {
 
 // Validate token
 export const validateToken = (token) => (dispatch) => {
-  const ws = new WebSocket("wss://ws.binaryws.com/websockets/v3?app_id=1089");
+  var ws = new WebSocket("wss://ws.binaryws.com/websockets/v3?app_id=1089");
   dispatch({
     type: actionTypes.TOKEN_VALIDATION_START
   });
@@ -85,11 +91,10 @@ export const validateToken = (token) => (dispatch) => {
         authorize: token
       })
     );
-  };
+  }
 
   ws.onerror = (err) => {
     console.log(err);
-    ws.close();
   }
 
   ws.onmessage = (msg) => {
@@ -119,7 +124,67 @@ export const validateToken = (token) => (dispatch) => {
           userDetails
         }
       });
+      dispatch(fetchLoginHistory());
+      dispatch({
+        type: actionTypes.CREATE_MESSAGE,
+        payload: {
+          tokenValidated: "Token is valid!"
+        }
+      });
     }
     ws.close();
+  };
+}
+
+
+// Login History
+export const fetchLoginHistory = () => (dispatch, getState) => {
+  var ws = new WebSocket("wss://ws.binaryws.com/websockets/v3?app_id=1089");
+  const activeToken = getState().webapi.activeToken;
+  dispatch({
+    type: actionTypes.LOGIN_HISTORY_FETCH_START
+  });
+  ws.onopen = (evt) => {
+    ws.send(
+      JSON.stringify({
+        authorize: activeToken
+      })
+    );
+  }
+
+  ws.onerror = (err) => {
+    console.log(err);
+  }
+
+  ws.onmessage = (msg) => {
+    var data = JSON.parse(msg.data);
+    if (data.error) {
+      console.log(data.error);
+      dispatch({
+        type: actionTypes.LOGIN_HISTORY_FETCH_FAIL
+      });
+      dispatch({
+        type: actionTypes.SHOW_ERROR,
+        payload: {
+          status: 406,
+          msg: {
+            invalidTokenError: data.error.message
+          }
+        }
+      });
+    }else if(data.authorize){
+      ws.send(
+        JSON.stringify({
+          login_history: 1,
+          limit: 20
+        })
+      );
+    }else if (data.login_history){
+      dispatch({
+        type: actionTypes.LOGIN_HISTORY_FETCH_SUCCESS,
+        payload: data.login_history
+      });
+      ws.close();
+    }
   };
 }

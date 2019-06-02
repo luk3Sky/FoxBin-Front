@@ -1,6 +1,6 @@
 // React
 import React, { Component } from "react";
-import { BrowserRouter, Switch, Route } from "react-router-dom";
+import { BrowserRouter, Route } from "react-router-dom";
 
 // React-alert
 import { transitions, positions, Provider as AlertProvider } from "react-alert";
@@ -10,6 +10,7 @@ import AlertTemplate from "react-alert-template-basic";
 import { Provider } from "react-redux";
 import store from "./store/store";
 import { loadUser } from "./store/actions/authActions";
+import { tickStream, retrieveExchangeRates } from "./store/actions/tickActions";
 
 // Styles
 // import style from "./App.module.css";
@@ -37,16 +38,12 @@ const options = {
 };
 
 class App extends Component {
-  componentDidMount(){
-    store.dispatch(loadUser());
-  }
   render() {
-    // console.log(window.location.href.split("=")[2]);
-    // const token = window.location.href.split("=")[2];
-    // if (token) {
-    //   // Action
-    //   console.log(token);
-    // }
+    if (store.getState().auth.foxToken) {
+      store.dispatch(loadUser());
+      store.dispatch(tickStream());
+      store.dispatch(retrieveExchangeRates());
+    }
     return (
       <Provider store={store}>
         <AlertProvider template={AlertTemplate} {...options}>
@@ -54,12 +51,10 @@ class App extends Component {
             <BrowserRouter>
                 <Navbar />
                 <main className="mt-0">
-                    {/* <Switch> */}
-                        <Route exact path="/" component={Home} />
-                        <ProtectedRoute path="/dashboard" component={Dashboard} />
-                        <Route path="/signin" component={Signin} />
-                        <Route path="/register" component={Register} />
-                    {/* </Switch> */}
+                  <Route exact path="/" component={Home} />
+                  <ProtectedRoute path="/dashboard" component={Dashboard} />
+                  <Route path="/signin" component={Signin} />
+                  <Route path="/register" component={Register} />
                 </main>
                 <Footer />
             </BrowserRouter>

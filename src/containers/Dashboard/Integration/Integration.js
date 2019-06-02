@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import propTypes from "prop-types";
 
 import { connect } from 'react-redux';
-import { loadTokens, validateToken, addToken } from "../../../store/actions/tokenActions";
+import { validateToken, addToken } from "../../../store/actions/webapiActions";
 import { SHOW_ERROR } from "../../../store/actions/actionTypes";
 
 import ListGroup from '../../../components/ListGroup/ListGroup';
@@ -10,39 +10,47 @@ import ListGroup from '../../../components/ListGroup/ListGroup';
 import { WhisperSpinner } from "react-spinners-kit";
 
 class Integration extends Component {
-    state = {
+
+  state = {
       formInput: "",
       formError: false,
       token: null
-    }
+  }
 
-    static propTypes = {
-        isAuthenticated: propTypes.bool.isRequired,
-        binaryAPI: propTypes.object.isRequired,
-        loadTokens: propTypes.func.isRequired,
-        validateToken: propTypes.func.isRequired,
-        addToken: propTypes.func.isRequired,
-        alertZeroTokenError: propTypes.func.isRequired
-      }
+  static propTypes = {
+    isAuthenticated: propTypes.bool.isRequired,
+    binaryAPI: propTypes.object.isRequired,
+    // loadTokens: propTypes.func.isRequired,
+    // fetchLoginHistory: propTypes.func.isRequired,
+    validateToken: propTypes.func.isRequired,
+    addToken: propTypes.func.isRequired,
+    alertZeroTokenError: propTypes.func.isRequired
+  }
 
-    componentDidMount(){
-        if(this.props.isAuthenticated && !this.props.binaryAPI.isLoading){
-            this.props.loadTokens();
-        }
-        var params = window.location.search.split("=");
-        if(params.length > 1){
-          const token = params[2].split("&")[0];
-          console.log(token);
-          this.setState({
-            formInput: token
-          })
-        }
+  componentDidMount(){
+    // if(this.props.isAuthenticated && !this.props.binaryAPI.isLoading){
+    //   this.props.loadTokens();
+    //   // this.props.fetchLoginHistory(this.props.binaryAPI.activeToken);
+    // }
+    var params = window.location.search.split("=");
+    if(params.length > 1){
+      const token = params[2].split("&")[0];
+      console.log(token);
+      this.setState({
+        formInput: token
+      })
     }
+  }
+  
+  componentDidUpdate(){
+    console.log(this.props);
+    // if(this.props.binaryAPI.isValidated && (this.props.binaryAPI.history.loginHistory.length === 0)){
+    //     this.props.fetchLoginHistory(this.props.binaryAPI.activeToken);
+    // }
+  }
 
     handleOAuth = (e) => {
-      // console.log(e);
-      var newWindow = window.open("https://oauth.binary.com/oauth2/authorize?app_id=17015");
-      // console.log(newWindow);
+      window.location = "https://oauth.binary.com/oauth2/authorize?app_id=17015";
     }
 
     handleValidation = () => {
@@ -66,10 +74,11 @@ class Integration extends Component {
         token: this.state.formInput
       };
       if(token.token.length > 0){
-        this.setState({
-          formError: false
-        });
         this.props.addToken(token);
+        this.setState({
+          formError: false,
+          formInput: ""
+        });
       }else{
         this.setState({
           formError: true
@@ -92,12 +101,12 @@ class Integration extends Component {
                   <p className="card-text">In this section, you can check whether the token you already got is valid by selecting <strong>validation check</strong>, or if not you can obtain a 
                   new one by selecting <strong>authorize now</strong> button.</p>
                   <div className="btn-group btn-group-toggle" data-toggle="buttons">
-                    <label className="btn btn-primary" onClick={this.handleValidation}>
+                    <button className="btn btn-primary" onClick={this.handleValidation}>
                       <input type="radio" name="options" id="option1"  disabled={this.props.binaryAPI.isValidated} autoComplete="on"/>validation check
-                    </label>
-                    <label className="btn btn-primary" onClick={this.handleOAuth}>
+                    </button>
+                    <button className="btn btn-primary" onClick={this.handleOAuth}>
                       <input type="radio" name="options" id="option2" disabled={!this.props.binaryAPI.isValidated} autoComplete="off"/>Authorize now
-                    </label>
+                    </button>
                   </div>
                   <p className="card-text my-3">Or, you can add a token manually using this form.
                   You can create a token on the binary.com platform via the <strong>security & limitations</strong> under <strong>settings</strong> section in the binary platform.</p>
@@ -152,23 +161,24 @@ class Integration extends Component {
 const mapStateToProps = state => {
     return {
       isAuthenticated: state.auth.isAuthenticated,
-      binaryAPI: state.token
+      binaryAPI: state.webapi
     };
 };
 
 const mapDispatchToProps = dispatch => {
     return {
-      loadTokens: () => dispatch(loadTokens()),
+      // loadTokens: () => dispatch(loadTokens()),
       validateToken: (token) => dispatch(validateToken(token)),
+      // fetchLoginHistory: (token) => dispatch(fetchLoginHistory(token)),
       addToken: (token) => dispatch(addToken(token)),
       alertZeroTokenError: (msg) => dispatch({
-                                        type: SHOW_ERROR,
-                                        payload: {
-                                          msg: {
-                                            invalidTokenError: "You have zero token available!"
-                                          }
-                                        }
-                                      })
+          type: SHOW_ERROR,
+          payload: {
+            msg: {
+              invalidTokenError: "You have zero token available!"
+            }
+          }
+        })
     };
 };
 
