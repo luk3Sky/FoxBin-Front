@@ -4,7 +4,7 @@
   "private": true,
   "dependencies": {
     "apexcharts": "^3.6.11",
-    "axios": "^0.18.0",
+    "axios": "^0.21.1",
     "coreui-react-starter": "^1.0.0-alpha.5",
     "fusioncharts": "^3.13.4",
     "npm": "^6.9.0",
